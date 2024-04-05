@@ -37,7 +37,7 @@ app.get('/api/courses', (req,res)=> {
 app.get('/api/courses/:id', (req,res)=> {
     const course = courses.find(c => c.id === parseInt(req.params.id));
     // 404 error code if the request fails on getting course id
-    if(!course) res.status(404).send('Error code 404 COURSE ID NOT FOUND')
+    if(!course) return res.status(404).send('Error code 404 COURSE ID NOT FOUND')
     res.send(course)
 });
 
@@ -66,8 +66,58 @@ app.post('/api/courses', (req,res) =>{
     res.send(course);
 });
 
+app.put('/api/courses/:id', (req,res)=> {
+//look up the course if ir doesn't exist return 404 error
+    const course = courses.find(c => c.id === parseInt(req.params.id));
+    if(!course) return res.status(404).send('Error code 404 COURSE ID NOT FOUND')
+    res.send(course)
+
+    //validate, if invalid return 400 bad req
+    const schema = Joi.object({
+        name: Joi.string().min(3).required()
+    });
+    const result = schema.validate(req.body);
 
 
+    // can call this instead
+    const result2 = validateCourse(req.body)
+    const {error} = validateCourse(req.body) //eqiv to result.error this is object destructing
+
+
+    if(result.error){
+        // i can change to send any result
+        res.status(400).send(result.error.details[0].message);
+        return;
+    }
+
+    // Update course
+    course.name = req.body.name;
+    res.send(course);
+
+
+});
+
+
+app.delete('/api/course/:id', (req,res)=>{
+    const course = courses.find(c => c.id === parseInt(req.params.id));
+    // 404 error code if the request fails on getting course id
+    if(!course) return res.status(404).send('Error code 404 COURSE ID NOT FOUND')
+    res.send(course)
+
+    const index = courses.indexOf(course);
+    course.splice(index,1);
+    res.send(course);
+})
+
+
+//can put validator in seperate func
+//validate, if invalid return 400 bad req
+function validateCourse (course){
+    const schema = Joi.object({
+        name: Joi.string().min(3).required()
+    });
+    return schema.validate(course);
+}
 
 
 // 2 args, 1st is port # , 2nd is optional and can be another func
